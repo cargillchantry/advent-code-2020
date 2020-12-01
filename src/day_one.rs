@@ -3,13 +3,14 @@ use crate::file_util::read_lines_as_u32;
 
 #[allow(dead_code)]
 pub fn find_pair_summing_to<'a, I>(numbers: I, value: u32) -> Option<(&'a u32, &'a u32)>
-    where I: IntoIterator<Item = &'a u32> + Clone, <I as IntoIterator>::IntoIter: Clone {
+    where I: IntoIterator<Item = &'a u32>, <I as IntoIterator>::IntoIter: Clone {
     numbers.into_iter().tuple_combinations()
         .find(|(first, second)| *first + *second == value)
 }
 
+#[allow(dead_code)]
 pub fn find_triple_summing_to<'a, I>(numbers: I, value: u32) -> Option<(&'a u32, &'a u32, &'a u32)>
-    where I: IntoIterator<Item = &'a u32> + Clone, <I as IntoIterator>::IntoIter: Clone {
+    where I: IntoIterator<Item = &'a u32>, <I as IntoIterator>::IntoIter: Clone {
     numbers.into_iter().tuple_combinations()
         .find(|(first, second, third)| *first + *second + *third == value)
 }
