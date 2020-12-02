@@ -1,6 +1,5 @@
 use crate::file_util::read_lines;
 use std::str::FromStr;
-use itertools::Itertools;
 
 #[derive(Debug)]
 struct PasswordPolicy {
@@ -13,7 +12,7 @@ struct PasswordPolicy {
 fn parse_password_file(lines: impl Iterator<Item = String>) -> impl Iterator<Item = PasswordPolicy> {
     lines.filter_map(|line| {
         let mut split_password = line
-            .splitn(4, |char: char| char == ' ' || char == '-')
+            .splitn(4, |split_on| split_on == ' ' || split_on == '-')
             .into_iter();
         let at_least_length_part = split_password.next();
         let at_most_length_part = split_password.next();
