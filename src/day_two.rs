@@ -1,5 +1,4 @@
 use crate::file_util::read_lines;
-use std::str::FromStr;
 
 #[derive(Debug)]
 struct PasswordPolicy {
@@ -14,19 +13,19 @@ fn parse_password_file(lines: impl Iterator<Item = String>) -> impl Iterator<Ite
         let mut split_password = line
             .splitn(4, |split_on| split_on == ' ' || split_on == '-')
             .into_iter();
-        let at_least_length_part = split_password.next();
-        let at_most_length_part = split_password.next();
-        let letter_part = split_password.next().and_then(|str| str.chars().next());
-        let password_part = split_password.next();
-        at_least_length_part
-            .zip(at_most_length_part)
-            .zip(letter_part.zip(password_part))
-            .map(|((at_least_length, at_most_length), (letter, password))| PasswordPolicy {
-                at_least_length: usize::from_str(at_least_length).expect("Malformed file input."),
-                at_most_length: usize::from_str(at_most_length).expect("Malformed file input."),
-                letter,
-                password: password.to_owned()
-            })
+
+        let at_least_length_part = split_password.next()?.parse::<usize>().ok()?;
+        let at_most_length_part = split_password.next()?.parse::<usize>().ok()?;
+        let letter_part = split_password.next()?.chars().next()?;
+        let password_part = split_password.next()?.to_owned();
+        Some(
+            PasswordPolicy {
+                at_least_length: at_least_length_part,
+                at_most_length: at_most_length_part,
+                letter: letter_part,
+                password: password_part
+            }
+        )
     })
 }
 
@@ -65,7 +64,7 @@ pub fn run_day_two() {
             }
             prev
         });
-    print!("Number valid: {} {}", number_valid[0], number_valid[1])
+    println!("Number valid: {} {}", number_valid[0], number_valid[1])
 }
 
 
