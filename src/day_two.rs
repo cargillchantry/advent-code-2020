@@ -30,7 +30,7 @@ fn parse_password_file(lines: impl Iterator<Item = String>) -> impl Iterator<Ite
     })
 }
 
-fn is_valid(policy: &PasswordPolicy) -> bool {
+fn is_valid_for_task_one(policy: &PasswordPolicy) -> bool {
     let char_count = policy.password
         .chars()
         .filter(|curr| curr == &policy.letter)
@@ -38,12 +38,34 @@ fn is_valid(policy: &PasswordPolicy) -> bool {
     char_count <= policy.at_most_length && char_count >= policy.at_least_length
 }
 
+fn is_valid_for_task_two(policy: &PasswordPolicy) -> bool {
+    let mut iterator = policy.password
+        .chars()
+        .skip(policy.at_least_length - 1);
+    let is_first = iterator
+        .next()
+        .map_or(false, |letter| letter == policy.letter);
+    let is_second = iterator
+        .skip(policy.at_most_length - policy.at_least_length - 1)
+        .next()
+        .map_or(false, |letter| letter == policy.letter);
+    is_first ^ is_second
+}
+
 #[allow(dead_code)]
 pub fn run_day_two() {
+    let mut result = [0, 0];
     let number_valid = parse_password_file(read_lines("assets/day_two"))
-        .filter(is_valid)
-        .count();
-    print!("Number valid: {}", number_valid)
+        .fold(&mut result, |prev, policy| {
+            if is_valid_for_task_one(&policy) {
+                prev[0] = prev[0] + 1;
+            }
+            if is_valid_for_task_two(&policy) {
+                prev[1] = prev[1] + 1;
+            }
+            prev
+        });
+    print!("Number valid: {} {}", number_valid[0], number_valid[1])
 }
 
 
@@ -66,9 +88,9 @@ mod tests {
     }
 
     #[test]
-    fn should_reject_invalid_password_file_due_to_at_least_condition() {
+    fn should_reject_invalid_password_file_for_task_one_due_to_at_least_condition() {
         assert_eq!(
-            is_valid(&PasswordPolicy{
+            is_valid_for_task_one(&PasswordPolicy{
                 at_least_length: 1,
                 at_most_length: 3,
                 letter: 'a',
@@ -79,9 +101,9 @@ mod tests {
     }
 
     #[test]
-    fn should_reject_invalid_password_file_due_to_at_most_condition() {
+    fn should_reject_invalid_password_file_for_task_one_due_to_at_most_condition() {
         assert_eq!(
-            is_valid(&PasswordPolicy{
+            is_valid_for_task_one(&PasswordPolicy{
                 at_least_length: 1,
                 at_most_length: 3,
                 letter: 'a',
@@ -92,9 +114,9 @@ mod tests {
     }
 
     #[test]
-    fn should_accept_valid_password_file() {
+    fn should_accept_valid_password_file_for_task_one() {
         assert_eq!(
-            is_valid(&PasswordPolicy{
+            is_valid_for_task_one(&PasswordPolicy{
                 at_least_length: 1,
                 at_most_length: 3,
                 letter: 'a',
@@ -103,7 +125,7 @@ mod tests {
             true
         );
         assert_eq!(
-            is_valid(&PasswordPolicy{
+            is_valid_for_task_one(&PasswordPolicy{
                 at_least_length: 1,
                 at_most_length: 3,
                 letter: 'a',
@@ -111,5 +133,53 @@ mod tests {
             }),
             true
         )
+    }
+
+    #[test]
+    fn should_accept_valid_password_file_for_task_two() {
+        assert_eq!(
+            is_valid_for_task_two(&PasswordPolicy{
+                at_least_length: 1,
+                at_most_length: 3,
+                letter: 'a',
+                password: "abc".to_owned()
+            }),
+            true
+        );
+        assert_eq!(
+            is_valid_for_task_two(&PasswordPolicy{
+                at_least_length: 2,
+                at_most_length: 3,
+                letter: 'a',
+                password: "dbaf".to_owned()
+            }),
+            true
+        )
+    }
+
+    #[test]
+    fn should_reject_invalid_password_file_due_to_both_matching_for_task_two() {
+        assert_eq!(
+            is_valid_for_task_two(&PasswordPolicy{
+                at_least_length: 4,
+                at_most_length: 9,
+                letter: 'b',
+                password: "aaabaaaaba".to_owned()
+            }),
+            false
+        );
+    }
+
+    #[test]
+    fn should_reject_invalid_password_file_due_to_neither_matching_for_task_two() {
+        assert_eq!(
+            is_valid_for_task_two(&PasswordPolicy{
+                at_least_length: 4,
+                at_most_length: 9,
+                letter: 'b',
+                password: "a".to_owned()
+            }),
+            false
+        );
     }
 }
