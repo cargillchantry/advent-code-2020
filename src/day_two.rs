@@ -1,5 +1,6 @@
 use crate::file_util::read_lines;
 use std::str::FromStr;
+use itertools::Itertools;
 
 #[derive(Debug)]
 struct PasswordPolicy {
@@ -11,29 +12,21 @@ struct PasswordPolicy {
 
 fn parse_password_file(lines: impl Iterator<Item = String>) -> impl Iterator<Item = PasswordPolicy> {
     lines.filter_map(|line| {
-        let mut line_iterator = line.chars().enumerate().into_iter();
-        let mut under_score_position = None;
-        let mut space_position = None;
-        let mut policy_letter = None;
-        while let Some((index, current)) = line_iterator.next() {
-            match current {
-                '-' => under_score_position = Some(index),
-                ' ' => {
-                    space_position = Some(index);
-                    policy_letter = line_iterator.next().map(|(_, letter)| letter);
-                    break
-                }
-                _ => ()
-            }
-        }
-        under_score_position
-            .zip(space_position)
-            .zip(policy_letter)
-            .map(|((under_score, space), policy_letter)| PasswordPolicy {
-                at_least_length: usize::from_str(&line[0..under_score]).expect("Malformed file input."),
-                at_most_length: usize::from_str(&line[under_score + 1..space]).expect("Malformed file input."),
-                letter: policy_letter,
-                password: line[space + 4..].to_owned()
+        let mut split_password = line
+            .splitn(4, |char: char| char == ' ' || char == '-')
+            .into_iter();
+        let at_least_length_part = split_password.next();
+        let at_most_length_part = split_password.next();
+        let letter_part = split_password.next().and_then(|str| str.chars().next());
+        let password_part = split_password.next();
+        at_least_length_part
+            .zip(at_most_length_part)
+            .zip(letter_part.zip(password_part))
+            .map(|((at_least_length, at_most_length), (letter, password))| PasswordPolicy {
+                at_least_length: usize::from_str(at_least_length).expect("Malformed file input."),
+                at_most_length: usize::from_str(at_most_length).expect("Malformed file input."),
+                letter,
+                password: password.to_owned()
             })
     })
 }
