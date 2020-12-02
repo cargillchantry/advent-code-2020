@@ -1,6 +1,5 @@
 use crate::file_util::read_lines;
 
-#[derive(Debug)]
 struct PasswordPolicy {
     at_least_length: usize,
     at_most_length: usize,
@@ -14,16 +13,16 @@ fn parse_password_file(lines: impl Iterator<Item = String>) -> impl Iterator<Ite
             .splitn(4, |split_on| split_on == ' ' || split_on == '-')
             .into_iter();
 
-        let at_least_length_part = split_password.next()?.parse::<usize>().ok()?;
-        let at_most_length_part = split_password.next()?.parse::<usize>().ok()?;
-        let letter_part = split_password.next()?.chars().next()?;
-        let password_part = split_password.next()?.to_owned();
+        let at_least_length = split_password.next()?.parse::<usize>().ok()?;
+        let at_most_length = split_password.next()?.parse::<usize>().ok()?;
+        let letter = split_password.next()?.chars().next()?;
+        let password = split_password.next()?.to_owned();
         Some(
             PasswordPolicy {
-                at_least_length: at_least_length_part,
-                at_most_length: at_most_length_part,
-                letter: letter_part,
-                password: password_part
+                at_least_length,
+                at_most_length,
+                letter,
+                password
             }
         )
     })
