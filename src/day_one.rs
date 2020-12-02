@@ -1,20 +1,17 @@
 use itertools::Itertools;
 use crate::file_util::read_lines_as_u32;
 
-#[allow(dead_code)]
-pub fn find_pair_summing_to<'a, I>(numbers: I, value: u32) -> Option<(&'a u32, &'a u32)>
-    where I: IntoIterator<Item = &'a u32>, <I as IntoIterator>::IntoIter: Clone {
-    numbers.into_iter().tuple_combinations()
+fn find_pair_summing_to(numbers: &Vec<u32>, value: u32) -> Option<(&u32, &u32)> {
+    numbers.iter().tuple_combinations()
         .find(|(first, second)| *first + *second == value)
 }
 
-#[allow(dead_code)]
-pub fn find_triple_summing_to<'a, I>(numbers: I, value: u32) -> Option<(&'a u32, &'a u32, &'a u32)>
-    where I: IntoIterator<Item = &'a u32>, <I as IntoIterator>::IntoIter: Clone {
-    numbers.into_iter().tuple_combinations()
+fn find_triple_summing_to(numbers: &Vec<u32>, value: u32) -> Option<(&u32, &u32, &u32)> {
+    numbers.iter().tuple_combinations()
         .find(|(first, second, third)| *first + *second + *third == value)
 }
 
+#[allow(dead_code)]
 pub fn run_day_one() {
     let numbers = read_lines_as_u32("assets/day_one").collect_vec();
     let first_result = find_pair_summing_to(&numbers, 2020);
