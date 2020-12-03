@@ -1,12 +1,12 @@
 use itertools::Itertools;
 use crate::file_util::read_lines_as_u32;
 
-fn find_pair_summing_to(numbers: &Vec<u32>, value: u32) -> Option<(&u32, &u32)> {
+fn find_pair_summing_to(numbers: &[u32], value: u32) -> Option<(&u32, &u32)> {
     numbers.iter().tuple_combinations()
         .find(|(first, second)| *first + *second == value)
 }
 
-fn find_triple_summing_to(numbers: &Vec<u32>, value: u32) -> Option<(&u32, &u32, &u32)> {
+fn find_triple_summing_to(numbers: &[u32], value: u32) -> Option<(&u32, &u32, &u32)> {
     numbers.iter().tuple_combinations()
         .find(|(first, second, third)| *first + *second + *third == value)
 }

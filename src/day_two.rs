@@ -10,8 +10,7 @@ struct PasswordPolicy {
 fn parse_password_file(lines: impl Iterator<Item = String>) -> impl Iterator<Item = PasswordPolicy> {
     lines.filter_map(|line| {
         let mut split_password = line
-            .splitn(4, |split_on| split_on == ' ' || split_on == '-')
-            .into_iter();
+            .splitn(4, |split_on| split_on == ' ' || split_on == '-');
 
         let at_least_length = split_password.next()?.parse::<usize>().ok()?;
         let at_most_length = split_password.next()?.parse::<usize>().ok()?;
@@ -37,15 +36,12 @@ fn is_valid_for_task_one(policy: &PasswordPolicy) -> bool {
 }
 
 fn is_valid_for_task_two(policy: &PasswordPolicy) -> bool {
-    let mut iterator = policy.password
-        .chars()
-        .skip(policy.at_least_length - 1);
+    let mut iterator = policy.password.chars();
     let is_first = iterator
-        .next()
+        .nth(policy.at_least_length - 1)
         .map_or(false, |letter| letter == policy.letter);
     let is_second = iterator
-        .skip(policy.at_most_length - policy.at_least_length - 1)
-        .next()
+        .nth(policy.at_most_length - policy.at_least_length - 1)
         .map_or(false, |letter| letter == policy.letter);
     is_first ^ is_second
 }
@@ -56,10 +52,10 @@ pub fn run_day_two() {
     let number_valid = parse_password_file(read_lines("assets/day_two"))
         .fold(&mut result, |prev, policy| {
             if is_valid_for_task_one(&policy) {
-                prev[0] = prev[0] + 1;
+                prev[0] += 1;
             }
             if is_valid_for_task_two(&policy) {
-                prev[1] = prev[1] + 1;
+                prev[1] += 1;
             }
             prev
         });

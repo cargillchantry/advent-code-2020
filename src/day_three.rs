@@ -15,7 +15,7 @@ fn convert_to_collision_vec(iterator: impl Iterator<Item = String>) -> Vec<Vec<u
             '.' => None,
             _ => Some(index)
         })
-        .collect::<Vec<usize>>()
+        .collect()
     ).collect()
 }
 
@@ -23,7 +23,7 @@ fn calculate_collisions(
     board_size: usize,
     horizontal_skip: usize,
     vertical_skip: usize,
-    slope: &Vec<Vec<usize>>
+    slope: &[Vec<usize>]
 ) -> Position {
     slope
         .iter()
