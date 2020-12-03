@@ -120,13 +120,13 @@ mod tests {
 
     #[test]
     fn should_calculate_collisions_with_vertical_skip() {
-        let result = calculate_collisions(11, 1, 2, &vec!(
+        let result = calculate_collisions(11, 1, 2, &[
             vec!(),
             vec!(0, 1, 2, 3, 4, 5),
             vec!(1),
             vec!(0, 1, 2, 3, 4, 5),
             vec!(2)
-        ));
+        ]);
         assert_eq!(result.count, 2)
     }
 }
