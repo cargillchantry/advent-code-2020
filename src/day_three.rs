@@ -94,9 +94,9 @@ mod tests {
     fn should_calculate_collisions_with_vertical_skip() {
         let result = calculate_collisions(11, 1, 2, vec!(
             &String::from("..##......."),
-            &String::from("....#...#.."),
+            &String::from("###########"),
             &String::from(".#....#..#."),
-            &String::from("..#........"),
+            &String::from("###########"),
             &String::from("..#........")
         ).into_iter());
         assert_eq!(result.count, 2)
