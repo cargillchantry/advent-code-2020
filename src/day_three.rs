@@ -27,14 +27,10 @@ fn calculate_collisions(
 ) -> Position {
     slope
         .iter()
-        .enumerate()
+        .step_by(vertical_skip)
         .fold(
             Position { horizontal: 0, count: 0 },
-            |position, (index, tree_positions)| {
-                if index % vertical_skip != 0 {
-                    return position
-                }
-
+            |position, tree_positions| {
                 Position {
                     horizontal: (position.horizontal + horizontal_skip) % board_size,
                     count: position.count + if tree_positions.contains(&position.horizontal) {
