@@ -23,12 +23,13 @@ fn calculate_collisions(
         .enumerate()
         .fold(
             0,
-            |mut count, (index, tree_positions)| {
+            |count, (index, tree_positions)| {
                 let horizontal = (index * horizontal_step) % board_size;
                 if tree_positions.contains(&horizontal) {
-                    count += 1;
+                    count + 1
+                } else {
+                    count
                 }
-                count
             }
         )
 }
