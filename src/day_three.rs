@@ -24,7 +24,7 @@ fn calculate_collisions(
     horizontal_step: usize,
     vertical_step: usize,
     slope: &[Vec<usize>]
-) -> Position {
+) -> usize {
     slope
         .iter()
         .step_by(vertical_step)
@@ -38,7 +38,7 @@ fn calculate_collisions(
                         0
                     }
                 }
-        )
+        ).count
 }
 
 #[allow(dead_code)]
@@ -50,7 +50,7 @@ pub fn run_day_three() {
         1,
         &lines
     );
-    println!("Result Task 1 {}", result.count);
+    println!("Result Task 1 {}", result);
 
     let second_result: usize = [[1, 1], [1, 5], [1, 7], [2, 1]]
         .iter()
@@ -60,11 +60,11 @@ pub fn run_day_three() {
                 slope[1],
                 slope[0],
                 &lines
-            ).count
+            )
         )
         .product();
 
-    println!("Result Task 2 {}", second_result * result.count)
+    println!("Result Task 2 {}", second_result * result)
 }
 
 #[cfg(test)]
@@ -109,7 +109,7 @@ mod tests {
             ).into_iter()
         );
         let result = calculate_collisions(11, 3, 1, &slope);
-        assert_eq!(result.count, 7)
+        assert_eq!(result, 7)
     }
 
     #[test]
@@ -121,6 +121,6 @@ mod tests {
             vec!(0, 1, 2, 3, 4, 5),
             vec!(2)
         ]);
-        assert_eq!(result.count, 2)
+        assert_eq!(result, 2)
     }
 }
