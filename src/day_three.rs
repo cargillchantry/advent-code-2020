@@ -21,25 +21,23 @@ fn convert_to_collision_vec(iterator: impl Iterator<Item = String>) -> Vec<Vec<u
 
 fn calculate_collisions(
     board_size: usize,
-    horizontal_skip: usize,
-    vertical_skip: usize,
+    horizontal_step: usize,
+    vertical_step: usize,
     slope: &[Vec<usize>]
 ) -> Position {
     slope
         .iter()
-        .step_by(vertical_skip)
+        .step_by(vertical_step)
         .fold(
             Position { horizontal: 0, count: 0 },
-            |position, tree_positions| {
-                Position {
-                    horizontal: (position.horizontal + horizontal_skip) % board_size,
+            |position, tree_positions| Position {
+                    horizontal: (position.horizontal + horizontal_step) % board_size,
                     count: position.count + if tree_positions.contains(&position.horizontal) {
                         1
                     } else {
                         0
                     }
                 }
-            }
         )
 }
 
