@@ -1,20 +1,12 @@
 use crate::file_util::read_lines;
+use itertools::Itertools;
 
 const BOARD_SIZE: usize = 31;
-
-struct Position {
-    horizontal: usize,
-    count: usize
-}
 
 fn convert_to_collision_vec(iterator: impl Iterator<Item = String>) -> Vec<Vec<usize>> {
     iterator.map(|line| line
         .chars()
-        .enumerate()
-        .filter_map(|(index, block)| match block {
-            '.' => None,
-            _ => Some(index)
-        })
+        .positions(|column| column == '#')
         .collect()
     ).collect()
 }
@@ -28,17 +20,17 @@ fn calculate_collisions(
     slope
         .iter()
         .step_by(vertical_step)
+        .enumerate()
         .fold(
-            Position { horizontal: 0, count: 0 },
-            |position, tree_positions| Position {
-                    horizontal: (position.horizontal + horizontal_step) % board_size,
-                    count: position.count + if tree_positions.contains(&position.horizontal) {
-                        1
-                    } else {
-                        0
-                    }
+            0,
+            |mut count, (index, tree_positions)| {
+                let horizontal = (index * horizontal_step) % board_size;
+                if tree_positions.contains(&horizontal) {
+                    count += 1;
                 }
-        ).count
+                count
+            }
+        )
 }
 
 #[allow(dead_code)]
