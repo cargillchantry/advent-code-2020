@@ -7,12 +7,7 @@ struct Position {
     count: usize
 }
 
-fn calculate_collisions<'a>(
-    board_size: usize,
-    horizontal_skip: usize,
-    vertical_skip: usize,
-    iterator: impl Iterator<Item = &'a String>
-) -> Position {
+fn convert_to_collision_vec(iterator: impl Iterator<Item = String>) -> Vec<Vec<usize>> {
     iterator.map(|line| line
         .chars()
         .enumerate()
@@ -21,7 +16,17 @@ fn calculate_collisions<'a>(
             _ => Some(index)
         })
         .collect::<Vec<usize>>()
-    )
+    ).collect()
+}
+
+fn calculate_collisions(
+    board_size: usize,
+    horizontal_skip: usize,
+    vertical_skip: usize,
+    slope: &Vec<Vec<usize>>
+) -> Position {
+    slope
+        .iter()
         .enumerate()
         .fold(
             Position { horizontal: 0, count: 0 },
@@ -44,12 +49,12 @@ fn calculate_collisions<'a>(
 
 #[allow(dead_code)]
 pub fn run_day_three() {
-    let lines = read_lines("assets/day_three").collect::<Vec<String>>();
+    let lines = convert_to_collision_vec(read_lines("assets/day_three"));
     let result = calculate_collisions(
         BOARD_SIZE,
         3,
         1,
-        lines.iter()
+        &lines
     );
     println!("Result Task 1 {}", result.count);
 
@@ -60,7 +65,7 @@ pub fn run_day_three() {
                 BOARD_SIZE,
                 slope[1],
                 slope[0],
-                lines.iter()
+                &lines
             ).count
         )
         .product();
@@ -73,32 +78,55 @@ mod tests {
     use crate::day_three::*;
 
     #[test]
+    fn should_convert_lines_to_collision_vec() {
+        let result = convert_to_collision_vec(
+            vec!(
+                String::from("..##......."),
+                String::from("#...#...#.."),
+                String::from(".#....#..#.")
+            ).into_iter()
+        );
+        assert_eq!(
+            vec!(
+                vec!(2, 3),
+                vec!(0, 4, 8),
+                vec!(1, 6, 9)
+            ),
+            result
+        )
+    }
+
+    #[test]
     fn should_calculate_collisions_with_horizontal_skip() {
-        let result = calculate_collisions(11, 3, 1, vec!(
-            &String::from("..##......."),
-            &String::from("#...#...#.."),
-            &String::from(".#....#..#."),
-            &String::from("..#.#...#.#"),
-            &String::from(".#...##..#."),
-            &String::from("..#.##....."),
-            &String::from(".#.#.#....#"),
-            &String::from(".#........#"),
-            &String::from("#.##...#..."),
-            &String::from("#...##....#"),
-            &String::from(".#..#...#.#")
-        ).into_iter());
+        // we use the exact strings provided by advent here
+        let slope = convert_to_collision_vec(
+            vec!(
+                String::from("..##......."),
+                String::from("#...#...#.."),
+                String::from(".#....#..#."),
+                String::from("..#.#...#.#"),
+                String::from(".#...##..#."),
+                String::from("..#.##....."),
+                String::from(".#.#.#....#"),
+                String::from(".#........#"),
+                String::from("#.##...#..."),
+                String::from("#...##....#"),
+                String::from(".#..#...#.#")
+            ).into_iter()
+        );
+        let result = calculate_collisions(11, 3, 1, &slope);
         assert_eq!(result.count, 7)
     }
 
     #[test]
     fn should_calculate_collisions_with_vertical_skip() {
-        let result = calculate_collisions(11, 1, 2, vec!(
-            &String::from("..##......."),
-            &String::from("###########"),
-            &String::from(".#....#..#."),
-            &String::from("###########"),
-            &String::from("..#........")
-        ).into_iter());
+        let result = calculate_collisions(11, 1, 2, &vec!(
+            vec!(),
+            vec!(0, 1, 2, 3, 4, 5),
+            vec!(1),
+            vec!(0, 1, 2, 3, 4, 5),
+            vec!(2)
+        ));
         assert_eq!(result.count, 2)
     }
 }
