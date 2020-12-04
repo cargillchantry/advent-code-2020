@@ -33,7 +33,7 @@ impl Credentials {
 
     fn is_valid_for_task_two(&self) -> bool {
         self.is_valid_for_task_one() &&
-            !self.credentials.iter().find(|c| !c.is_valid()).is_some()
+            !self.credentials.iter().any(|c| !c.is_valid())
     }
 }
 
@@ -127,12 +127,18 @@ mod tests {
 
     #[test]
     fn should_convert_lines_to_credentials() {
-        let under_test = vec!(String::from("ecl:gry pid:860033327 eyr:2020 hcl:#fffffd byr:1937 iyr:2017 cid:147 hgt:183cm"));
-        let result = convert_to_credentials(under_test.into_iter())
+        let under_test = String::from("ecl:gry pid:860033327 eyr:2020
+        hcl:#fffffd byr:1937
+        iyr:2017 cid:147 hgt:183cm
+
+        ecl:gry pid:860033327 eyr:2020 hcl:#fffffd byr:1937 iyr:2017 cid:147 hgt:183cm");
+        let result = convert_to_credentials(
+            under_test.lines().map(|x| x.to_string())
+        )
             .collect::<Vec<Credentials>>();
         let first_result = result.first().unwrap();
 
-
+        assert_eq!(result.len(), 2);
         assert_eq!(first_result.credentials.contains(&Credential::ECL("gry".into())), true);
         assert_eq!(first_result.credentials.contains(&Credential::PID("860033327".into())), true);
         assert_eq!(first_result.credentials.contains(&Credential::EYR("2020".into())), true);
@@ -163,5 +169,42 @@ mod tests {
             .filter(|credential| credential.is_valid_for_task_one())
             .count();
         assert_eq!(creds, 2)
+    }
+
+    #[test]
+    fn should_count_valid_credentials_for_task_two() {
+        let under_test = "eyr:1972 cid:100
+        hcl:#18171d ecl:amb hgt:170 pid:186cm iyr:2018 byr:1926
+
+        iyr:2019
+        hcl:#602927 eyr:1967 hgt:170cm
+        ecl:grn pid:012533040 byr:1946
+
+        hcl:dab227 iyr:2012
+        ecl:brn hgt:182cm pid:021572410 eyr:2020 byr:1992 cid:277
+
+        hgt:59cm ecl:zzz
+        eyr:2038 hcl:74454a iyr:2023
+        pid:3556412378 byr:2007
+
+        pid:087499704 hgt:74in ecl:grn iyr:2012 eyr:2030 byr:1980
+        hcl:#623a2f
+
+        eyr:2029 ecl:blu cid:129 byr:1989
+        iyr:2014 pid:896056539 hcl:#a97842 hgt:165cm
+
+        hcl:#888785
+        hgt:164cm byr:2001 iyr:2015 cid:88
+        pid:545766238 ecl:hzl
+        eyr:2022
+
+        iyr:2010 hgt:158cm hcl:#b6652a ecl:blu byr:1944 eyr:2021 pid:093154719
+        ";
+        let creds = convert_to_credentials(
+            under_test.lines().map(|x| String::from(x.trim())).into_iter()
+        )
+            .filter(|credential| credential.is_valid_for_task_two())
+            .count();
+        assert_eq!(creds, 4)
     }
 }
