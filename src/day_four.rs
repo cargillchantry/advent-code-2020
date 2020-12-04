@@ -1,61 +1,96 @@
 use crate::file_util::read_lines;
 use std::collections::HashMap;
 use itertools::Itertools;
+use std::str::FromStr;
 
-struct Credential {
-    byr: Option<String>,
-    iyr: Option<String>,
-    eyr: Option<String>,
-    hgt: Option<String>,
-    hcl: Option<String>,
-    ecl: Option<String>,
-    pid: Option<String>
+const EYE_COLORS: [&str; 7] = ["amb", "blu", "brn", "gry", "grn", "hzl", "oth"];
+
+struct Credentials {
+    credentials: Vec<Credential>
 }
 
-impl Credential {
-    fn new(data: HashMap<String, String>) -> Self {
-        Credential {
-            byr: data.get("byr").map(|x| x.to_owned()),
-            iyr: data.get("iyr").map(|x| x.to_owned()),
-            eyr: data.get("eyr").map(|x| x.to_owned()),
-            hgt: data.get("hgt").map(|x| x.to_owned()),
-            hcl: data.get("hcl").map(|x| x.to_owned()),
-            ecl: data.get("ecl").map(|x| x.to_owned()),
-            pid: data.get("pid").map(|x| x.to_owned())
+impl Credentials {
+    fn new(data: HashMap<String, String>) -> Credentials {
+        Credentials {
+            credentials: data.iter()
+                .filter_map(|(key, value)| match key.as_str() {
+                    "byr" => Some(Credential::BYR(value.to_owned())),
+                    "iyr" => Some(Credential::IYR(value.to_owned())),
+                    "eyr" => Some(Credential::EYR(value.to_owned())),
+                    "hgt" => Some(Credential::HGT(value.to_owned())),
+                    "hcl" => Some(Credential::HCL(value.to_owned())),
+                    "ecl" => Some(Credential::ECL(value.to_owned())),
+                    "pid" => Some(Credential::PID(value.to_owned())),
+                    _ => None
+                })
+                .collect()
         }
     }
 
     fn is_valid_for_task_one(&self) -> bool {
-        self.byr.is_some() &&
-            self.iyr.is_some() &&
-            self.eyr.is_some() &&
-            self.hgt.is_some() &&
-            self.hcl.is_some() &&
-            self.ecl.is_some() &&
-            self.pid.is_some()
+        self.credentials.len() == 7
+    }
+
+    fn is_valid_for_task_two(&self) -> bool {
+        self.is_valid_for_task_one() &&
+            !self.credentials.iter().find(|c| !c.is_valid()).is_some()
     }
 }
 
-fn convert_to_credentials(iterator: impl Iterator<Item = String>) -> impl Iterator<Item = Credential> {
+#[derive(Eq, PartialEq)]
+enum Credential {
+    BYR(String),
+    IYR(String),
+    EYR(String),
+    HGT(String),
+    HCL(String),
+    ECL(String),
+    PID(String)
+}
+
+impl Credential {
+    fn is_valid(&self) -> bool {
+        match self {
+            Credential::EYR(v) => is_number_between(v, 2020, 2030),
+            Credential::IYR(v) => is_number_between(v, 2010, 2020),
+            Credential::BYR(v) => is_number_between(v, 1920, 2002),
+            Credential::HCL(v) => v.starts_with('#')
+                && v.len() == 7
+                && v.chars().skip(1).find(|c| !c.is_ascii_hexdigit()).is_none(),
+            Credential::HGT(v) => if v.ends_with("cm") {
+                is_number_between(&v[..v.len()-2], 150, 193)
+            } else if v.ends_with("in") {
+                is_number_between(&v[..v.len()-2], 59, 76)
+            } else {
+                false
+            },
+            Credential::ECL(v) => EYE_COLORS.contains(&v.as_str()),
+            Credential::PID(v) => v.chars().find(|c| !c.is_numeric()).is_none()
+                && v.len() == 9
+        }
+    }
+}
+
+fn is_number_between(value: &str, start: u16, end: u16) -> bool {
+    u16::from_str(value).ok()
+        .filter(|it| *it >= start && *it <= end)
+        .is_some()
+}
+
+fn convert_to_credentials(iterator: impl Iterator<Item = String>) -> impl Iterator<Item =Credentials> {
     iterator
         .batching(|iterator| {
-            let mut buffer = Vec::new();
-            loop {
-                let next = iterator.next()
-                    .filter(|value| !value.is_empty());
-                if let Some(value) = next {
-                    buffer.push(value);
-                } else {
-                    return if buffer.is_empty() {
-                        None
-                    } else {
-                        Some(buffer.join(" "))
-                    }
-                }
+            let next = iterator
+                .take_while(|value| !value.is_empty())
+                .join(" ");
+            if next.is_empty() {
+                None
+            } else {
+                Some(next)
             }
         })
         .map(|line|
-            Credential::new(
+            Credentials::new(
                 line
                     .as_str()
                     .split(' ')
@@ -73,11 +108,17 @@ pub fn run_day_four() {
     let converted = convert_to_credentials(
         read_lines("assets/day_four")
     );
-    let task_one = converted
-        .filter(|credential| credential.is_valid_for_task_one())
-        .count();
+    let mut results = [0, 0];
+    converted.for_each(|credentials| {
+        if credentials.is_valid_for_task_one() {
+            results[0] += 1
+        }
+        if credentials.is_valid_for_task_two() {
+            results[1] += 1
+        }
+    });
 
-    println!("Result Task One: {}", task_one)
+    println!("Result: {} {}", results[0], results[1])
 }
 
 #[cfg(test)]
@@ -88,20 +129,21 @@ mod tests {
     fn should_convert_lines_to_credentials() {
         let under_test = vec!(String::from("ecl:gry pid:860033327 eyr:2020 hcl:#fffffd byr:1937 iyr:2017 cid:147 hgt:183cm"));
         let result = convert_to_credentials(under_test.into_iter())
-            .collect::<Vec<Credential>>();
+            .collect::<Vec<Credentials>>();
         let first_result = result.first().unwrap();
 
-        assert_eq!(first_result.ecl.as_ref().unwrap(), &String::from("gry"));
-        assert_eq!(first_result.pid.as_ref().unwrap(), &String::from("860033327"));
-        assert_eq!(first_result.eyr.as_ref().unwrap(), &String::from("2020"));
-        assert_eq!(first_result.hcl.as_ref().unwrap(), &String::from("#fffffd"));
-        assert_eq!(first_result.byr.as_ref().unwrap(), &String::from("1937"));
-        assert_eq!(first_result.iyr.as_ref().unwrap(), &String::from("2017"));
-        assert_eq!(first_result.hgt.as_ref().unwrap(), &String::from("183cm"))
+
+        assert_eq!(first_result.credentials.contains(&Credential::ECL("gry".into())), true);
+        assert_eq!(first_result.credentials.contains(&Credential::PID("860033327".into())), true);
+        assert_eq!(first_result.credentials.contains(&Credential::EYR("2020".into())), true);
+        assert_eq!(first_result.credentials.contains(&Credential::HCL("#fffffd".into())), true);
+        assert_eq!(first_result.credentials.contains(&Credential::BYR("1937".into())), true);
+        assert_eq!(first_result.credentials.contains(&Credential::IYR("2017".into())), true);
+        assert_eq!(first_result.credentials.contains(&Credential::HGT("183cm".into())), true)
     }
 
     #[test]
-    fn should_count_valid_credentials() {
+    fn should_count_valid_credentials_for_task_one() {
         let under_test = "ecl:gry pid:860033327 eyr:2020 hcl:#fffffd
             byr:1937 iyr:2017 cid:147 hgt:183cm
 
