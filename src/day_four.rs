@@ -2,17 +2,41 @@ use crate::file_util::read_lines;
 use std::collections::HashMap;
 use itertools::Itertools;
 
-const MANDITORY_FIELDS: &[&str] = &[
-    "byr",
-    "iyr",
-    "eyr",
-    "hgt",
-    "hcl",
-    "ecl",
-    "pid"
-];
+struct Credential {
+    byr: Option<String>,
+    iyr: Option<String>,
+    eyr: Option<String>,
+    hgt: Option<String>,
+    hcl: Option<String>,
+    ecl: Option<String>,
+    pid: Option<String>
+}
 
-fn convert_to_credentials(iterator: impl Iterator<Item = String>) -> impl Iterator<Item = HashMap<String, String>> {
+impl Credential {
+    fn new(data: HashMap<String, String>) -> Self {
+        Credential {
+            byr: data.get("byr").map(|x| x.to_owned()),
+            iyr: data.get("iyr").map(|x| x.to_owned()),
+            eyr: data.get("eyr").map(|x| x.to_owned()),
+            hgt: data.get("hgt").map(|x| x.to_owned()),
+            hcl: data.get("hcl").map(|x| x.to_owned()),
+            ecl: data.get("ecl").map(|x| x.to_owned()),
+            pid: data.get("pid").map(|x| x.to_owned())
+        }
+    }
+
+    fn is_valid_for_task_one(&self) -> bool {
+        self.byr.is_some() &&
+            self.iyr.is_some() &&
+            self.eyr.is_some() &&
+            self.hgt.is_some() &&
+            self.hcl.is_some() &&
+            self.ecl.is_some() &&
+            self.pid.is_some()
+    }
+}
+
+fn convert_to_credentials(iterator: impl Iterator<Item = String>) -> impl Iterator<Item = Credential> {
     iterator
         .batching(|iterator| {
             let mut buffer = Vec::new();
@@ -31,23 +55,17 @@ fn convert_to_credentials(iterator: impl Iterator<Item = String>) -> impl Iterat
             }
         })
         .map(|line|
-            line
-                .as_str()
-                .split(' ')
-                .filter_map(|part| {
-                    let index = part.find(':')?;
-                    Some((String::from(&part[..index]), String::from(&part[index+1..])))
-                })
-                .collect()
+            Credential::new(
+                line
+                    .as_str()
+                    .split(' ')
+                    .filter_map(|part| {
+                        let index = part.find(':')?;
+                        Some((String::from(&part[..index]), String::from(&part[index+1..])))
+                    })
+                    .collect()
+            )
         )
-}
-
-fn count_valid(iterator: impl Iterator<Item = HashMap<String, String>>) -> usize {
-    iterator
-        .filter(|credential|
-            MANDITORY_FIELDS.iter().all(|key| credential.contains_key(*key))
-        )
-        .count()
 }
 
 #[allow(dead_code)]
@@ -55,8 +73,11 @@ pub fn run_day_four() {
     let converted = convert_to_credentials(
         read_lines("assets/day_four")
     );
+    let task_one = converted
+        .filter(|credential| credential.is_valid_for_task_one())
+        .count();
 
-    println!("Result Task One: {}", count_valid(converted))
+    println!("Result Task One: {}", task_one)
 }
 
 #[cfg(test)]
@@ -65,13 +86,18 @@ mod tests {
 
     #[test]
     fn should_convert_lines_to_credentials() {
-        let under_test = vec!(String::from("test:value another:again"));
+        let under_test = vec!(String::from("ecl:gry pid:860033327 eyr:2020 hcl:#fffffd byr:1937 iyr:2017 cid:147 hgt:183cm"));
         let result = convert_to_credentials(under_test.into_iter())
-            .collect::<Vec<HashMap<String, String>>>();
+            .collect::<Vec<Credential>>();
         let first_result = result.first().unwrap();
 
-        assert_eq!(first_resut.get("test").unwrap(), &String::from("value"));
-        assert_eq!(first_resut.get("another").unwrap(), &String::from("again"))
+        assert_eq!(first_result.ecl.as_ref().unwrap(), &String::from("gry"));
+        assert_eq!(first_result.pid.as_ref().unwrap(), &String::from("860033327"));
+        assert_eq!(first_result.eyr.as_ref().unwrap(), &String::from("2020"));
+        assert_eq!(first_result.hcl.as_ref().unwrap(), &String::from("#fffffd"));
+        assert_eq!(first_result.byr.as_ref().unwrap(), &String::from("1937"));
+        assert_eq!(first_result.iyr.as_ref().unwrap(), &String::from("2017"));
+        assert_eq!(first_result.hgt.as_ref().unwrap(), &String::from("183cm"))
     }
 
     #[test]
@@ -91,7 +117,9 @@ mod tests {
             iyr:2011 ecl:brn hgt:59in";
         let creds = convert_to_credentials(
             under_test.lines().map(|x| String::from(x.trim())).into_iter()
-        );
-        assert_eq!(count_valid(creds), 2)
+        )
+            .filter(|credential| credential.is_valid_for_task_one())
+            .count();
+        assert_eq!(creds, 2)
     }
 }
