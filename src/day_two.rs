@@ -1,4 +1,4 @@
-use crate::file_util::read_lines;
+use crate::file_util::read_non_blank_lines;
 
 struct PasswordPolicy {
     at_least_length: usize,
@@ -49,7 +49,7 @@ fn is_valid_for_task_two(policy: &PasswordPolicy) -> bool {
 #[allow(dead_code)]
 pub fn run_day_two() {
     let mut result = [0, 0];
-    let number_valid = parse_password_file(read_lines("assets/day_two"))
+    let number_valid = parse_password_file(read_non_blank_lines("assets/day_two"))
         .fold(&mut result, |prev, policy| {
             if is_valid_for_task_one(&policy) {
                 prev[0] += 1;

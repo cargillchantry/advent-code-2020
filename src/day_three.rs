@@ -1,4 +1,4 @@
-use crate::file_util::read_lines;
+use crate::file_util::read_non_blank_lines;
 use itertools::Itertools;
 
 const BOARD_SIZE: usize = 31;
@@ -36,7 +36,7 @@ fn calculate_collisions(
 
 #[allow(dead_code)]
 pub fn run_day_three() {
-    let lines = convert_to_collision_vec(read_lines("assets/day_three"));
+    let lines = convert_to_collision_vec(read_non_blank_lines("assets/day_three"));
     let result = calculate_collisions(
         BOARD_SIZE,
         3,

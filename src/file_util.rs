@@ -9,10 +9,14 @@ pub fn read_lines<P>(filename: P) -> impl Iterator<Item = String> where P: AsRef
     io::BufReader::new(file)
         .lines()
         .map(|line| line.expect("Failed reading line."))
+}
+
+pub fn read_non_blank_lines<P>(filename: P) -> impl Iterator<Item = String> where P: AsRef<Path> {
+    read_lines(filename)
         .filter(|line| !line.is_empty())
 }
 
 pub fn read_lines_as_u32<P>(filename: P) -> impl Iterator<Item = u32> where P: AsRef<Path> {
-    read_lines(filename)
+    read_non_blank_lines(filename)
         .map(|line| u32::from_str(line.as_str()).expect("Failed to convert to u32."))
 }
