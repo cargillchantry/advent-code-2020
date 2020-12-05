@@ -32,5 +32,7 @@ mod tests {
     use crate::day_five::*;
 
     #[test]
-    fn should_() {}
+    fn should_convert_binary_str_to_decimal() {
+        assert_eq!(to_integer_from_binary_string("WWbeW", 'W'), Ok(25))
+    }
 }
