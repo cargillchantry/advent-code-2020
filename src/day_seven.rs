@@ -48,8 +48,7 @@ pub fn run_day_seven() {
         words.by_ref().find(|word| *word != "no");
 
         let children = words.batching(|children| {
-            let blah = children.next();
-            if let Some(count) = blah.and_then(|c| u16::from_str(c).ok()) {
+            if let Some(count) = children.next().and_then(|c| u16::from_str(c).ok()) {
                 let bag_name = children
                     .take_while(|word| !word.starts_with("bag"))
                     .join(" ");
