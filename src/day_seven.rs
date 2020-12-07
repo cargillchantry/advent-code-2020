@@ -45,7 +45,7 @@ pub fn run_day_seven() {
     read_non_blank_lines("assets/day_seven").for_each(|line| {
         let mut words = line.split(' ');
         let name = words.by_ref().take_while(|word| *word != "bags").join(" ");
-        words.by_ref().skip_while(|word| *word == "no").next();
+        words.by_ref().find(|word| *word != "no");
 
         let children = words.batching(|children| {
             let blah = children.next();
