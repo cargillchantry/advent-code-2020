@@ -8,21 +8,15 @@ struct Bag {
     children: Vec<(String, u16)>
 }
 
-fn search_parents<'a>(bag: &Bag, tree: &HashMap<String, Bag>, parents: &'a mut HashSet<String>) -> &'a HashSet<String> {
+fn search_parents<'a>(bag: &Bag, tree: &HashMap<String, Bag>, parents: &'a mut HashSet<String>) {
     for (key, _) in bag.parents.iter() {
         if !parents.contains(key) {
             parents.insert(key.clone());
             if let Some(parent_bag) = tree.get(key) {
-                search_parents(
-                    parent_bag,
-                    tree,
-                    parents
-                );
+                search_parents(parent_bag, tree, parents);
             }
         }
     }
-
-    parents
 }
 
 fn get_children_count(bag: &Bag, tree: &HashMap<String, Bag>) -> usize {
