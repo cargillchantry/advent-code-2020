@@ -13,18 +13,15 @@ fn parse_isize_from_line(line: &str) -> Option<isize> {
     isize::from_str(&line[4..]).ok()
 }
 
-fn get_state_on_loop(instructions: &[Instruction]) -> (usize, isize) {
+fn get_end_state(instructions: &[Instruction]) -> (usize, isize) {
     let mut visited = HashSet::new();
     let mut current_instruction = 0;
     let mut sum = 0_isize;
-    loop {
-        if !visited.insert(current_instruction) || current_instruction >= instructions.len() {
-            return (current_instruction, sum);
-        }
-        let instruction = &instructions[current_instruction];
-        match instruction {
+    while visited.insert(current_instruction) && current_instruction < instructions.len() {
+        match &instructions[current_instruction] {
             ACC(amount) => {
                 sum += amount;
+                current_instruction += 1
             },
             JMP(amount) => {
                 if amount.is_negative() {
@@ -32,17 +29,15 @@ fn get_state_on_loop(instructions: &[Instruction]) -> (usize, isize) {
                 } else {
                     current_instruction += *amount as usize;
                 }
-                continue;
             },
-            _ => ()
+            _ => current_instruction += 1
         }
-        current_instruction += 1
     }
+    (current_instruction, sum)
 }
 
 fn get_bug_free_result(instructions: &mut Vec<Instruction>) -> Option<isize> {
-    let mut count = 0;
-    while count != instructions.len() {
+    for count in 0..instructions.len() {
         let replacement = match instructions[count] {
             NOP(x) => Some(JMP(x)),
             JMP(x) => Some(NOP(x)),
@@ -50,14 +45,13 @@ fn get_bug_free_result(instructions: &mut Vec<Instruction>) -> Option<isize> {
         };
         if let Some(replace) = replacement {
             let current = std::mem::replace(&mut instructions[count], replace);
-            let result = get_state_on_loop(&instructions);
+            let result = get_end_state(&instructions);
             instructions[count] = current;
 
             if result.0 == instructions.len() {
                 return Some(result.1)
             }
         }
-        count += 1;
     }
     None
 }
@@ -72,7 +66,7 @@ pub fn run_day_eight() {
             _ => None
         })
         .collect::<Vec<Instruction>>();
-    let result = get_state_on_loop(&instructions);
+    let result = get_end_state(&instructions);
     let result2 = get_bug_free_result(&mut instructions);
 
     println!(
@@ -99,7 +93,7 @@ mod tests {
             ACC(5),
             JMP(-2)
         );
-        assert_eq!(get_state_on_loop(&under_test), (4, 12))
+        assert_eq!(get_end_state(&under_test), (4, 12))
     }
 
     #[test]
