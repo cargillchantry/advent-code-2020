@@ -79,7 +79,6 @@ pub fn run_day_seven() {
 
 #[cfg(test)]
 mod tests {
-    use crate::day_seven::*;
 
     /**
     * Struggled with time ...

@@ -9,11 +9,11 @@ enum Instruction {
     JMP(isize)
 }
 
-fn parse_isize_from_line(line: &String) -> Option<isize> {
+fn parse_isize_from_line(line: &str) -> Option<isize> {
     isize::from_str(&line[4..]).ok()
 }
 
-fn get_loop_info(instructions: &Vec<Instruction>) -> (usize, isize) {
+fn get_state_on_loop(instructions: &[Instruction]) -> (usize, isize) {
     let mut visited = HashSet::new();
     let mut current_instruction = 0;
     let mut sum = 0_isize;
@@ -40,11 +40,9 @@ fn get_loop_info(instructions: &Vec<Instruction>) -> (usize, isize) {
     }
 }
 
-fn get_proper_result(instructions: &mut Vec<Instruction>) -> isize {
-    let mut sum = 0;
-    let mut last_instruction = 0;
+fn get_bug_free_result(instructions: &mut Vec<Instruction>) -> Option<isize> {
     let mut count = 0;
-    while last_instruction != instructions.len() && count != instructions.len() {
+    while count != instructions.len() {
         let replacement = match instructions[count] {
             NOP(x) => Some(JMP(x)),
             JMP(x) => Some(NOP(x)),
@@ -52,14 +50,16 @@ fn get_proper_result(instructions: &mut Vec<Instruction>) -> isize {
         };
         if let Some(replace) = replacement {
             let current = std::mem::replace(&mut instructions[count], replace);
-            let result = get_loop_info(&instructions);
-            sum = result.1;
-            last_instruction = result.0;
+            let result = get_state_on_loop(&instructions);
             instructions[count] = current;
+
+            if result.0 == instructions.len() {
+                return Some(result.1)
+            }
         }
         count += 1;
     }
-    return sum;
+    None
 }
 
 #[allow(dead_code)]
@@ -72,15 +72,17 @@ pub fn run_day_eight() {
             _ => None
         })
         .collect::<Vec<Instruction>>();
-    let result = get_loop_info(&instructions);
-    let result2 = get_proper_result(&mut instructions);
+    let result = get_state_on_loop(&instructions);
+    let result2 = get_bug_free_result(&mut instructions);
 
     println!(
-        "Loop found at {} with sum {}. After fixing we have {}.",
+        "Loop found at {} with sum {}.",
         result.0,
-        result.1,
-        result2
-    )
+        result.1
+    );
+    if let Some(fixed_result) = result2 {
+        println!("After fixing we have {}.", fixed_result)
+    }
 }
 
 #[cfg(test)]
@@ -97,6 +99,19 @@ mod tests {
             ACC(5),
             JMP(-2)
         );
-        assert_eq!(get_loop_info(&under_test), (4, 12))
+        assert_eq!(get_state_on_loop(&under_test), (4, 12))
+    }
+
+    #[test]
+    fn should_find_the_sum_of_the_correct_program() {
+        let mut under_test = vec!(
+            NOP(3),
+            ACC(3),
+            JMP(2),
+            ACC(4),
+            ACC(5),
+            JMP(-2)
+        );
+        assert_eq!(get_bug_free_result(&mut under_test), Some(8))
     }
 }
