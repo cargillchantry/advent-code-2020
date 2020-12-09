@@ -23,47 +23,20 @@ pub fn run_day_nine() {
     }
 }
 
-fn solve_part_two(number: isize, numbers: &[isize]) -> Option<(isize, isize)> {
-    let mut sum;
-    let mut smallest;
-    let mut largest;
-    for i in 0..numbers.len() {
-        sum = numbers[i];
-        smallest = sum;
-        largest = sum;
-        for &value in numbers.iter().skip(i + 1) {
-            sum += value;
-            if value < smallest {
-                smallest = value;
-            }
-            if value > largest {
-                largest = value;
-            }
-            if sum == number {
-                return Some((smallest, largest));
-            }
-            if sum > number {
-                break;
-            }
-        }
-    }
-    None
-}
-
 fn solve_part_one(data: &[isize]) -> Option<isize> {
-    let mut buffer = [0; 25];
-    let mut manipulated_buffer = [0; 25];
+    let mut history = [0; 25];
+    let mut manipulated_history = [0; 25];
     let mut iter = data.iter();
-    read_into_buffers(&mut buffer, &mut manipulated_buffer, &mut iter);
+    read_into_buffers(&mut history, &mut manipulated_history, &mut iter);
 
     iter
         .enumerate()
         .find(|(index, &x)| {
-            let is_result = !is_number_sum_of_any(x, &mut manipulated_buffer);
-            let replacing = buffer[index % 25];
-            buffer[index % 25] = x;
-            if let Some(position) = manipulated_buffer.iter().position(|&it| it == replacing) {
-                manipulated_buffer[position] = x;
+            let is_result = !is_number_sum_of_any(x, &mut manipulated_history);
+            let replacing = history[index % 25];
+            history[index % 25] = x;
+            if let Some(position) = manipulated_history.iter().position(|&it| it == replacing) {
+                manipulated_history[position] = x;
             }
             is_result
         })
@@ -97,6 +70,33 @@ fn is_number_sum_of_any(value: isize, numbers: &mut[isize]) -> bool {
         }
     }
     false
+}
+
+fn solve_part_two(number: isize, numbers: &[isize]) -> Option<(isize, isize)> {
+    let mut sum;
+    let mut smallest;
+    let mut largest;
+    for i in 0..numbers.len() {
+        sum = numbers[i];
+        smallest = sum;
+        largest = sum;
+        for &value in numbers.iter().skip(i + 1) {
+            sum += value;
+            if value < smallest {
+                smallest = value;
+            }
+            if value > largest {
+                largest = value;
+            }
+            if sum == number {
+                return Some((smallest, largest));
+            }
+            if sum > number {
+                break;
+            }
+        }
+    }
+    None
 }
 
 #[cfg(test)]
