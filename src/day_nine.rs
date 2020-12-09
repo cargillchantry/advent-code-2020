@@ -57,17 +57,12 @@ fn read_into_buffers<'a>(
 
 fn is_number_sum_of_any(value: isize, numbers: &mut[isize]) -> bool {
     numbers.sort_unstable();
-    'outer: for x in 0..numbers.len() {
-        if numbers[x] > value {
-            break;
-        }
-        for &y in numbers.iter().skip(x + 1) {
-            if numbers[x] + y == value {
-                return true
-            }
-            if numbers[x] + y > value {
-                continue 'outer
-            }
+    for x in 0..numbers.len() {
+        let current_value = numbers[x];
+        let other = numbers[x+1..]
+            .binary_search_by(|other| (other + current_value).cmp(&value));
+        if other.is_ok() {
+            return true;
         }
     }
     false
