@@ -1,5 +1,6 @@
 use crate::file_util::read_non_blank_lines;
 use std::str::FromStr;
+use std::cmp::{min, max};
 
 #[allow(dead_code)]
 pub fn run_day_nine() {
@@ -82,12 +83,8 @@ fn solve_part_two(number: isize, numbers: &[isize]) -> Option<(isize, isize)> {
         largest = sum;
         for &value in numbers.iter().skip(i + 1) {
             sum += value;
-            if value < smallest {
-                smallest = value;
-            }
-            if value > largest {
-                largest = value;
-            }
+            smallest = min(smallest, value);
+            largest = max(largest, value);
             if sum == number {
                 return Some((smallest, largest));
             }
