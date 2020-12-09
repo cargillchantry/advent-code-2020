@@ -3,25 +3,15 @@ use std::str::FromStr;
 
 #[allow(dead_code)]
 pub fn run_day_nine() {
-    let mut buffer = [0; 25];
-    let mut manipulated_buffer = [0; 25];
     let lines = read_non_blank_lines("assets/day_nine")
         .filter_map(|line| isize::from_str(line.as_str()).ok())
         .collect::<Vec<isize>>();
 
-    let mut part_one_iter = lines.iter();
-
-    read_into_buffers(&mut buffer, &mut manipulated_buffer, &mut part_one_iter);
-
-    let calculated_result = find_entry_that_is_sum_of_previous(
-        &mut buffer,
-        &mut manipulated_buffer,
-        &mut part_one_iter
-    );
+    let calculated_result = solve_part_one(&lines);
 
     if let Some(result) = calculated_result {
         println!("Result P1: {}", result);
-        let result2 = find_bounds_of_continuous_sum_matching_number(result, &lines);
+        let result2 = solve_part_two(result, &lines);
         if let Some((smallest, largest)) = result2 {
             println!(
                "Result P2: Smallest {} and Largest {} sum to {}",
@@ -33,10 +23,7 @@ pub fn run_day_nine() {
     }
 }
 
-fn find_bounds_of_continuous_sum_matching_number(
-    number: isize,
-    numbers: &[isize]
-) -> Option<(isize, isize)> {
+fn solve_part_two(number: isize, numbers: &[isize]) -> Option<(isize, isize)> {
     let mut sum;
     let mut smallest;
     let mut largest;
@@ -63,15 +50,16 @@ fn find_bounds_of_continuous_sum_matching_number(
     None
 }
 
-fn find_entry_that_is_sum_of_previous<'a>(
-    buffer: &mut [isize; 25],
-    manipulated_buffer: &mut [isize; 25],
-    iter: &mut impl Iterator<Item = &'a isize>
-) -> Option<isize> {
+fn solve_part_one(data: &[isize]) -> Option<isize> {
+    let mut buffer = [0; 25];
+    let mut manipulated_buffer = [0; 25];
+    let mut iter = data.iter();
+    read_into_buffers(&mut buffer, &mut manipulated_buffer, &mut iter);
+
     iter
         .enumerate()
         .find(|(index, &x)| {
-            let is_result = !is_number_sum_of_any(x, manipulated_buffer);
+            let is_result = !is_number_sum_of_any(x, &mut manipulated_buffer);
             let replacing = buffer[index % 25];
             buffer[index % 25] = x;
             if let Some(position) = manipulated_buffer.iter().position(|&it| it == replacing) {
@@ -118,7 +106,7 @@ mod tests {
     #[test]
     fn should_find_bounds_of_continuous_sum_matching_number() {
         assert_eq!(
-            find_bounds_of_continuous_sum_matching_number(
+            solve_part_two(
                 17,
                 &vec!(1, 32, 4, 7, 6, 78)
             ),
