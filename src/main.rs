@@ -1,4 +1,4 @@
-use crate::day_eight::run_day_eight;
+use crate::day_nine::run_day_nine;
 
 mod file_util;
 mod day_one;
@@ -9,8 +9,9 @@ mod day_five;
 mod day_six;
 mod day_seven;
 mod day_eight;
+mod day_nine;
 
 fn main() {
-    run_day_eight()
+    run_day_nine()
 }
 
