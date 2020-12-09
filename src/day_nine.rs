@@ -5,8 +5,8 @@ use std::cmp::{min, max};
 #[allow(dead_code)]
 pub fn run_day_nine() {
     let lines = read_non_blank_lines("assets/day_nine")
-        .filter_map(|line| isize::from_str(line.as_str()).ok())
-        .collect::<Vec<isize>>();
+        .filter_map(|line| usize::from_str(line.as_str()).ok())
+        .collect::<Vec<usize>>();
 
     let calculated_result = solve_part_one(&lines);
 
@@ -24,7 +24,7 @@ pub fn run_day_nine() {
     }
 }
 
-fn solve_part_one(data: &[isize]) -> Option<isize> {
+fn solve_part_one(data: &[usize]) -> Option<usize> {
     let mut history = [0; 25];
     let mut manipulated_history = [0; 25];
     let mut iter = data.iter();
@@ -45,9 +45,9 @@ fn solve_part_one(data: &[isize]) -> Option<isize> {
 }
 
 fn read_into_buffers<'a>(
-    buffer: &mut [isize; 25],
-    other_buffer: &mut [isize; 25],
-    iter: &mut impl Iterator<Item = &'a isize>
+    buffer: &mut [usize; 25],
+    other_buffer: &mut [usize; 25],
+    iter: &mut impl Iterator<Item = &'a usize>
 ) {
     iter.take(25).enumerate().for_each(|(index, n)| {
         buffer[index] = *n;
@@ -55,7 +55,7 @@ fn read_into_buffers<'a>(
     })
 }
 
-fn is_number_sum_of_any(value: isize, numbers: &mut[isize]) -> bool {
+fn is_number_sum_of_any(value: usize, numbers: &mut[usize]) -> bool {
     numbers.sort_unstable();
     for x in 0..numbers.len() {
         let current_value = numbers[x];
@@ -68,7 +68,7 @@ fn is_number_sum_of_any(value: isize, numbers: &mut[isize]) -> bool {
     false
 }
 
-fn solve_part_two(number: isize, numbers: &[isize]) -> Option<(isize, isize)> {
+fn solve_part_two(number: usize, numbers: &[usize]) -> Option<(usize, usize)> {
     let mut sum;
     let mut smallest;
     let mut largest;
