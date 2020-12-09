@@ -70,12 +70,12 @@ fn find_entry_that_is_sum_of_previous<'a>(
 ) -> Option<isize> {
     iter
         .enumerate()
-        .find(|(index, x)| {
-            let is_result = !is_number_sum_of_any(**x, manipulated_buffer);
+        .find(|(index, &x)| {
+            let is_result = !is_number_sum_of_any(x, manipulated_buffer);
             let replacing = buffer[index % 25];
-            buffer[index % 25] = **x;
-            if let Some(position) = manipulated_buffer.iter().position(|it| *it == replacing) {
-                manipulated_buffer[position] = **x;
+            buffer[index % 25] = x;
+            if let Some(position) = manipulated_buffer.iter().position(|&it| it == replacing) {
+                manipulated_buffer[position] = x;
             }
             is_result
         })
@@ -99,11 +99,11 @@ fn is_number_sum_of_any(value: isize, numbers: &mut[isize]) -> bool {
         if numbers[x] > value {
             break;
         }
-        for y in x + 1..numbers.len() {
-            if numbers[x] + numbers[y] == value {
+        for &y in numbers.iter().skip(x + 1) {
+            if numbers[x] + y == value {
                 return true
             }
-            if numbers[x] + numbers[y] > value {
+            if numbers[x] + y > value {
                 continue 'outer
             }
         }
