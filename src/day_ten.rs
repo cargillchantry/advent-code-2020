@@ -23,7 +23,8 @@ fn get_number_of_arrangements(input: &[usize]) -> usize {
                 3 => (0, 0, z),
                 2 => (z, 0, y + z),
                 _ => (y, z, x + y + z)
-            }).2
+            }
+        ).2
 }
 
 fn find_jolt_differences(input: &mut [usize]) -> [usize; 2] {
