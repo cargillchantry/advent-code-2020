@@ -40,7 +40,7 @@ pub fn run_day_eleven() {
         revisions += 1;
     }
     println!(
-        "Part 1 seat revisions {} after {} revisions",
+        "Part 1 seats taken {} after {} revisions",
          seats.iter().filter(|x| **x == TAKEN).count(),
          revisions
     );
@@ -50,7 +50,7 @@ pub fn run_day_eleven() {
         revisions += 1;
     }
     println!(
-        "Part 2 seat revisions {} after {} revisions",
+        "Part 2 seats taken {} after {} revisions",
         seats_part_2.iter().filter(|x| **x == TAKEN).count(),
         revisions
     )
