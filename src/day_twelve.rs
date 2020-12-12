@@ -17,13 +17,15 @@ pub fn run_day_twelve() {
         )
         .collect::<Vec<(char, isize)>>();
     let result = solve_part_one(&directions);
+    let result2 = solve_part_two(&directions);
 
     println!("Result part 1 {}", result.0.abs() + result.1.abs());
+    println!("Result part 2 {}", result2.0.abs() + result2.1.abs());
 }
 
 fn solve_part_one(inst: &[(char, isize)]) -> (isize, isize) {
     inst.iter()
-        .fold((East, (0, 0)), |previous, &(instruction, number)| {
+        .fold((East, (0, 0)), |previous, (instruction, number)| {
             match instruction {
                 'F' => translate(previous, number, Forward),
                 'B' => translate(previous, number, Backward),
@@ -38,7 +40,35 @@ fn solve_part_one(inst: &[(char, isize)]) -> (isize, isize) {
         }).1
 }
 
-fn rotate(position: (Heading, (isize, isize)), amount: isize, direction: Direction) -> (Heading, (isize, isize)) {
+fn solve_part_two(inst: &[(char, isize)]) -> (isize, isize) {
+    inst.iter()
+        .fold(((10_isize, 1_isize), (0_isize, 0_isize)), |(way_point, ship), (instruction, number)| {
+            match instruction {
+                'F' => (way_point, (ship.0 + number * way_point.0, ship.1 + number * way_point.1)),
+                'B' => (way_point, (ship.0 - number * way_point.0, ship.1 - number * way_point.1)),
+                'L' => (rotate_around(way_point, number, Forward), ship),
+                'R' => (rotate_around(way_point, number, Backward), ship),
+                'N' => ((way_point.0, way_point.1 + number), ship),
+                'E' => ((way_point.0 + number, way_point.1), ship),
+                'S' => ((way_point.0, way_point.1 - number), ship),
+                'W' => ((way_point.0 - number, way_point.1), ship),
+                _ => (way_point, ship)
+            }
+        }).1
+}
+
+fn rotate_around(way_point: (isize, isize), amount: &isize, direction: Direction) -> (isize, isize) {
+    let quarter_turns = (amount/90).rem_euclid(4);
+
+    match quarter_turns {
+        1 => if direction == Forward { (-way_point.1, way_point.0) } else { (way_point.1, -way_point.0) },
+        2 => (-way_point.0, -way_point.1),
+        3 => if direction == Forward { (way_point.1, -way_point.0) } else { (-way_point.1, way_point.0) },
+        _ => way_point
+    }
+}
+
+fn rotate(position: (Heading, (isize, isize)), amount: &isize, direction: Direction) -> (Heading, (isize, isize)) {
     let current_heading = position.0;
     let mut degrees = match current_heading {
         East => 0,
@@ -56,7 +86,7 @@ fn rotate(position: (Heading, (isize, isize)), amount: isize, direction: Directi
     (next_heading, position.1)
 }
 
-fn translate(position: (Heading, (isize, isize)), amount: isize, direction: Direction) -> (Heading, (isize, isize)) {
+fn translate(position: (Heading, (isize, isize)), amount: &isize, direction: Direction) -> (Heading, (isize, isize)) {
     let translate = if direction == Forward { 1 } else { -1 } * amount;
     let heading = position.0;
     match heading {
@@ -83,5 +113,47 @@ mod tests {
         let result = solve_part_one(&data);
         assert_eq!(result.0, 17);
         assert_eq!(result.1, -8);
+    }
+
+    #[test]
+    fn should_get_final_position_part_two() {
+        let data = vec!(
+            ('F', 10),
+            ('N', 3),
+            ('F', 7),
+            ('R', 90),
+            ('F', 11)
+        );
+        let result = solve_part_two(&data);
+        assert_eq!(result.0, 214);
+        assert_eq!(result.1, -72);
+    }
+
+    #[test]
+    fn should_rotate_around_ship() {
+        assert_eq!(
+            rotate_around((1, 2), &90, Forward),
+            (-2, 1)
+        );
+        assert_eq!(
+            rotate_around((1, 2), &180, Forward),
+            (-1, -2)
+        );
+        assert_eq!(
+            rotate_around((1, 2), &270, Forward),
+            (2, -1)
+        );
+        assert_eq!(
+            rotate_around((-1, 2), &90, Forward),
+            (-2, -1)
+        );
+        assert_eq!(
+            rotate_around((-1, 2), &180, Forward),
+            (1, -2)
+        );
+        assert_eq!(
+            rotate_around((-1, 2), &270, Forward),
+            (2, 1)
+        );
     }
 }
