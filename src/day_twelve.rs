@@ -9,30 +9,33 @@ enum Direction { Forward, Backward }
 
 #[allow(dead_code)]
 pub fn run_day_twelve() {
-    let iter = read_non_blank_lines("assets/day_twelve")
+    let directions = read_non_blank_lines("assets/day_twelve")
         .filter_map(|line|
             Some(
                 (line.chars().next().unwrap(), isize::from_str(&line[1..]).ok()?)
             )
-        );
-    let result = solve_part_one(iter);
+        )
+        .collect::<Vec<(char, isize)>>();
+    let result = solve_part_one(&directions);
+
     println!("Result part 1 {}", result.0.abs() + result.1.abs());
 }
 
-fn solve_part_one(iter: impl Iterator<Item = (char, isize)>) -> (isize, isize) {
-    iter.fold((East, (0, 0)), |previous, (instruction, number)| {
-        match instruction {
-            'F' => translate(previous, number, Forward),
-            'B' => translate(previous, number, Backward),
-            'L' => rotate(previous, number, Forward),
-            'R' => rotate(previous, number, Backward),
-            'N' => (previous.0, (previous.1.0, previous.1.1 + number)),
-            'E' => (previous.0, (previous.1.0 + number, previous.1.1)),
-            'S' => (previous.0, (previous.1.0, previous.1.1 - number)),
-            'W' => (previous.0, (previous.1.0 - number, previous.1.1)),
-            _ => previous
-        }
-    }).1
+fn solve_part_one(inst: &[(char, isize)]) -> (isize, isize) {
+    inst.iter()
+        .fold((East, (0, 0)), |previous, &(instruction, number)| {
+            match instruction {
+                'F' => translate(previous, number, Forward),
+                'B' => translate(previous, number, Backward),
+                'L' => rotate(previous, number, Forward),
+                'R' => rotate(previous, number, Backward),
+                'N' => (previous.0, (previous.1.0, previous.1.1 + number)),
+                'E' => (previous.0, (previous.1.0 + number, previous.1.1)),
+                'S' => (previous.0, (previous.1.0, previous.1.1 - number)),
+                'W' => (previous.0, (previous.1.0 - number, previous.1.1)),
+                _ => previous
+            }
+        }).1
 }
 
 fn rotate(position: (Heading, (isize, isize)), amount: isize, direction: Direction) -> (Heading, (isize, isize)) {
@@ -77,7 +80,7 @@ mod tests {
             ('R', 90),
             ('F', 11)
         );
-        let result = solve_part_one(data.into_iter());
+        let result = solve_part_one(&data);
         assert_eq!(result.0, 17);
         assert_eq!(result.1, -8);
     }
