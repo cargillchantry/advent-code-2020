@@ -31,13 +31,3 @@ pub fn run_day_thirteen() {
 fn inverse(x: usize, y: usize) -> usize {
     (1..y).find(|z| (z * x).rem_euclid(y) == 1).unwrap_or(0)
 }
-
-#[cfg(test)]
-mod tests {
-    use crate::day_thirteen::*;
-
-    #[test]
-    fn should_() {
-
-    }
-}
