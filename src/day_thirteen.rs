@@ -7,7 +7,7 @@ pub fn run_day_thirteen() {
     let departure_time = lines.next()
         .and_then(|x| usize::from_str(x.as_str()).ok())
         .unwrap();
-    let buses = lines.next().unwrap().split(",")
+    let buses = lines.next().unwrap().split(',')
         .enumerate()
         .filter(|(_, x)| *x != "x")
         .filter_map(|(index, x)| Some((index, usize::from_str(x).ok()?)))
@@ -28,7 +28,7 @@ pub fn run_day_thirteen() {
     println!("Result Part 2 {}", product - (result_part_two % product));
 }
 
-fn inverse(mut x: usize, mut y: usize) -> usize {
+fn inverse(x: usize, y: usize) -> usize {
     (1..y).find(|z| (z * x).rem_euclid(y) == 1).unwrap_or(0)
 }
 
