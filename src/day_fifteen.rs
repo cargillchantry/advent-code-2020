@@ -4,12 +4,12 @@ const PUZZLE_INPUT: [usize; 6] = [2, 0, 1, 9, 5, 19];
 
 #[allow(dead_code)]
 pub fn run_day_fifteen() {
-    let last_spoken = solve_part_one(&PUZZLE_INPUT, 2020);
-    let last_spoken_two = solve_part_one(&PUZZLE_INPUT, 30000000);
+    let last_spoken = solve_game(&PUZZLE_INPUT, 2020);
+    let last_spoken_two = solve_game(&PUZZLE_INPUT, 30000000);
     println!("Task 1 {} and Task 2 {}", last_spoken, last_spoken_two);
 }
 
-fn solve_part_one(input: &[usize], length: usize) -> usize {
+fn solve_game(input: &[usize], length: usize) -> usize {
     let mut spoken: HashMap<usize, usize> = (&input[0..input.len()])
         .iter()
         .copied()
@@ -32,8 +32,8 @@ mod tests {
 
     #[test]
     fn should_solve_part_one() {
-        assert_eq!(solve_part_one(&[0,3,6], 2020), 436);
-        assert_eq!(solve_part_one(&[2,1,3], 2020), 10);
-        assert_eq!(solve_part_one(&[1,3,2], 2020), 1);
+        assert_eq!(solve_game(&[0,3,6], 2020), 436);
+        assert_eq!(solve_game(&[2,1,3], 2020), 10);
+        assert_eq!(solve_game(&[1,3,2], 2020), 1);
     }
 }
