@@ -19,8 +19,7 @@ fn solve_part_one(input: &[usize], length: usize) -> usize {
     let mut last_spoken = input.last().copied().unwrap();
     spoken.remove(&last_spoken);
     for current in input.len()+1..=length {
-        let previous = spoken.insert(last_spoken, current - 1);
-        if let Some(x) = previous {
+        if let Some(x) = spoken.insert(last_spoken, current - 1) {
             last_spoken = current - x - 1;
         } else {
             last_spoken = 0;
