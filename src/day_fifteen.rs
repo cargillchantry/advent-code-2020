@@ -16,6 +16,7 @@ fn solve_game(input: &[usize], length: usize) -> usize {
         .enumerate()
         .map(|(i, v)| (v, i + 1))
         .collect();
+
     (input.len()+1..=length).fold(
         input.last().copied().unwrap(),
         |last_spoken, current| {
