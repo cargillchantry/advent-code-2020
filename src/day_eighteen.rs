@@ -47,8 +47,7 @@ fn to_tokens(chars: &mut Chars) -> Vec<Token> {
     buff
 }
 
-
-fn solve(tokens: &[Token], precedence: OperationPrecedence) -> Option<usize> {
+fn convert_to_post_fix(tokens: &[Token], precedence: OperationPrecedence) -> Vec<Token> {
     let mut stack = Vec::new();
     let mut post_fix = Vec::new();
     for token in tokens.iter() {
@@ -81,8 +80,12 @@ fn solve(tokens: &[Token], precedence: OperationPrecedence) -> Option<usize> {
     while let Some(token) = stack.pop() {
         post_fix.push(token);
     }
+    post_fix
+}
+
+fn solve(tokens: &[Token]) -> Option<usize> {
     let mut buff = Vec::new();
-    for token in post_fix.iter() {
+    for token in tokens.iter() {
         match token {
             Operation(op_type) => {
                 if let Some(Number(last)) = buff.pop() {
@@ -107,9 +110,9 @@ pub fn run_day_eighteen() {
         .map(|x| to_tokens(&mut x.chars()))
         .filter_map(|x|
              Some(
-                 (
-                    solve(&x, OperationPrecedence::None)?,
-                    solve(&x, OperationPrecedence::AddWins)?
+                (
+                    solve(&convert_to_post_fix(&x, OperationPrecedence::None))?,
+                    solve(&convert_to_post_fix(&x, OperationPrecedence::AddWins))?
                 )
              )
         )
