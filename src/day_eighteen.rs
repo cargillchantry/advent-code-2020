@@ -4,7 +4,6 @@ use std::iter::{once};
 use itertools::Itertools;
 use crate::day_eighteen::Token::{Number, LeftParen, RightParen, Operation};
 use crate::day_eighteen::OperationType::{Multiply, Add};
-use crate::day_eighteen::OperationPrecedence::AddWins;
 
 #[derive(Eq, PartialEq, Debug, Clone)]
 enum Token { LeftParen, RightParen, Operation(OperationType), Number(usize) }
@@ -82,7 +81,6 @@ fn solve(tokens: &[Token], precedence: OperationPrecedence) -> Option<usize> {
     while let Some(token) = stack.pop() {
         post_fix.push(token);
     }
-    println!("{:?}", post_fix);
     let mut buff = Vec::new();
     for token in post_fix.iter() {
         match token {
