@@ -4,12 +4,18 @@ use std::iter::{once};
 use itertools::Itertools;
 use crate::day_eighteen::Token::{Number, LeftParen, RightParen, Operation};
 use crate::day_eighteen::OperationType::{Multiply, Add};
+use crate::day_eighteen::OperationPrecedence::AddWins;
 
 #[derive(Eq, PartialEq, Debug, Clone)]
 enum Token { LeftParen, RightParen, Operation(OperationType), Number(usize) }
 #[derive(Eq, PartialEq, Debug, Clone)]
 enum OperationType {
     Multiply, Add
+}
+#[derive(Eq, PartialEq)]
+enum OperationPrecedence {
+    None,
+    AddWins
 }
 
 impl OperationType {
@@ -43,7 +49,7 @@ fn to_tokens(chars: &mut Chars) -> Vec<Token> {
 }
 
 
-fn solve(tokens: &[Token]) -> Option<usize> {
+fn solve(tokens: &[Token], precedence: OperationPrecedence) -> Option<usize> {
     let mut stack = Vec::new();
     let mut post_fix = Vec::new();
     for token in tokens.iter() {
@@ -53,15 +59,18 @@ fn solve(tokens: &[Token]) -> Option<usize> {
                 stack.push(token.clone());
             },
             RightParen => {
-                while let Some(token) = stack.pop() {
-                    if token == LeftParen {
+                while let Some(prev) = stack.pop() {
+                    if prev == LeftParen {
                         break;
                     }
-                    post_fix.push(token);
+                    post_fix.push(prev);
                 }
             },
-            Operation(_) => {
-                while let Some(Operation(_)) = stack.last() {
+            Operation(op_type) => {
+                while let Some(Operation(prev_op_type)) = stack.last() {
+                    if precedence == OperationPrecedence::AddWins && *op_type == Add && *prev_op_type != Add {
+                        break;
+                    }
                     if let Some(op) = stack.pop() {
                         post_fix.push(op);
                     }
@@ -70,8 +79,10 @@ fn solve(tokens: &[Token]) -> Option<usize> {
             }
         }
     }
-    post_fix.append(&mut stack);
-
+    while let Some(token) = stack.pop() {
+        post_fix.push(token);
+    }
+    println!("{:?}", post_fix);
     let mut buff = Vec::new();
     for token in post_fix.iter() {
         match token {
@@ -94,10 +105,17 @@ fn solve(tokens: &[Token]) -> Option<usize> {
 
 #[allow(dead_code)]
 pub fn run_day_eighteen() {
-    let part_one: usize = read_non_blank_lines("assets/day_eighteen")
+    let result: (usize, usize) = read_non_blank_lines("assets/day_eighteen")
         .map(|x| to_tokens(&mut x.chars()))
-        .map(|x| solve(&x).unwrap_or(0))
-        .sum();
+        .filter_map(|x|
+             Some(
+                 (
+                    solve(&x, OperationPrecedence::None)?,
+                    solve(&x, OperationPrecedence::AddWins)?
+                )
+             )
+        )
+        .fold((0, 0), |prev, (first, second)| (prev.0 + first, prev.1 + second));
 
-    println!("Part 1 {}", part_one)
+    println!("Part 1 {} and Part 2 {}", result.0, result.1)
 }
