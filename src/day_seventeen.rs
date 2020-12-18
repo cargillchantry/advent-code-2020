@@ -22,7 +22,7 @@ impl Board {
         }
     }
 
-    fn neighbours(&self, coord: &Vec<isize>) -> Vec<(Vec<isize>, &Block)> {
+    fn neighbours(&self, coord: &[isize]) -> Vec<(Vec<isize>, &Block)> {
         let mut iterators = Vec::new();
         for i in 0..self.dimensions {
             iterators.push(
@@ -49,14 +49,17 @@ impl Board {
             .collect()
     }
 
+    #[allow(clippy::all)]
     fn set_active(&mut self, coord: &Vec<isize>) {
         self.blocks.insert(coord.clone(), Active);
     }
 
+    #[allow(clippy::all)]
     fn set_inactive(&mut self, coord: &Vec<isize>) {
         self.blocks.remove(coord);
     }
 
+    #[allow(clippy::all)]
     fn get_block(&self, coord: &Vec<isize>) -> &Block {
         self.blocks.get(coord).unwrap_or(&Inactive)
     }
