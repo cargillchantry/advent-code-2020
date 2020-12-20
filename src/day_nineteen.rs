@@ -61,12 +61,13 @@ fn parse_grammar_into_rules(iter: &mut impl Iterator<Item = String>) -> HashMap<
     let mut rules = HashMap::new();
     for line in iter {
         let mut split = line.splitn(2, ':');
-        if let Some((rule, rest)) = split.next().and_then(|it| it.parse::<usize>().ok()).zip(split.next()) {
+        if let Some((rule, rest)) = split.next()
+            .and_then(|it| it.parse::<usize>().ok())
+            .zip(split.next()) {
             if rest.contains('"') {
                 let terminal = rest.chars()
                     .skip_while(|it| *it != '"')
-                    .skip(1)
-                    .next();
+                    .nth(1);
                 if let Some(character) = terminal {
                     rules.insert(rule, TerminalSymbol(character));
                 }
@@ -76,15 +77,15 @@ fn parse_grammar_into_rules(iter: &mut impl Iterator<Item = String>) -> HashMap<
                         let productions = sub_rule.split(' ')
                             .filter_map(|it| it.trim().parse::<usize>().ok())
                             .collect::<Vec<usize>>();
-                        if productions.len() > 0 {
+                        if !productions.is_empty() {
                             Some(
                                 productions.iter().skip(1)
                                     .fold(
-                                        ProductionRule::Reference(productions[0]),
+                                        Reference(productions[0]),
                                         |prev, production| {
-                                            ProductionRule::And(
+                                            And(
                                                 Box::new(prev),
-                                                Box::new(ProductionRule::Reference(*production))
+                                                Box::new(Reference(*production))
                                             )
                                         }
                                     )
@@ -98,7 +99,7 @@ fn parse_grammar_into_rules(iter: &mut impl Iterator<Item = String>) -> HashMap<
                     rules.insert(
                         rule,
                         split.into_iter().rev().fold(last, |prev, next| {
-                            ProductionRule::Or(Box::new(next), Box::new(prev))
+                            Or(Box::new(next), Box::new(prev))
                         })
                     );
                 }
