@@ -1,6 +1,24 @@
 use crate::file_util::read_lines;
 
-type Block = [u16; 5];
+#[derive(Debug)]
+struct Block {
+    id: u16,
+    rows: [u16; 10],
+    left: u16,
+    right: u16
+}
+
+impl Block {
+    fn borders(&self) -> [u16; 4] { [self.rows[0], self.left, self.right, self.rows[9]] }
+}
+
+trait FlipSide {
+    fn flip_side(self) -> Self;
+}
+
+impl FlipSide for u16 {
+    fn flip_side(self) -> Self { self.reverse_bits() >> 6 }
+}
 
 #[allow(dead_code)]
 pub fn run_day_twenty() {
@@ -9,21 +27,21 @@ pub fn run_day_twenty() {
     let mut corners = Vec::new();
     for (idx, signature) in signatures.iter().enumerate() {
         let mut count = 0;
-        for side in signature.iter().skip(1) {
-            let reversed = (*side).reverse_bits() >> 6;
+        for side in signature.borders().iter() {
+            let reversed = side.flip_side();
             let matches = signatures.iter().enumerate().any(|(other_idx, x)|
                 other_idx != idx &&
-                x.iter().skip(1).any(|y| y == side || *y == reversed)
+                x.borders().iter().any(|y| y == side || *y == reversed)
             );
             if matches {
                 count += 1;
             }
         }
         if count < 3 {
-            corners.push(signature[0]);
+            corners.push(signature.id);
         }
     }
-    println!("{:?}", corners.iter().map(|x| *x as usize).product::<usize>());
+    println!("Part 1 {:?}", corners.iter().map(|x| *x as usize).product::<usize>());
 }
 
 fn read_image_signatures(iter: &mut impl Iterator<Item = String>) -> Vec<Block> {
@@ -35,39 +53,38 @@ fn read_image_signatures(iter: &mut impl Iterator<Item = String>) -> Vec<Block> 
 }
 
 fn read_image_signature(iter: &mut impl Iterator<Item = String>) -> Option<Block> {
-    let name = iter.next()?
+    let id = iter.next()?
         .chars()
         .skip(5)
         .take_while(|it| *it != ':')
         .collect::<String>()
         .parse::<u16>()
         .ok()?;
-    let mut block_iter = iter
+    let block_iter = iter
         .take_while(|it| !it.trim().is_empty());
-    let first_line = block_iter.next()?;
-    let top = read_line_as_signature_part(&first_line);
-    let mut left = if first_line.chars().next()? == '#' { 1 } else { 0 };
-    let mut right = if first_line.chars().last()? == '#' { 1 } else { 0 };
-    let mut digit = 1;
-    let mut last = first_line;
-    for line in block_iter {
-        digit <<= 1;
-        left += if line.chars().next()? == '#' { digit } else { 0 };
-        right += if line.chars().last()? == '#' { digit } else { 0 };
-        last = line;
-    }
-    let bottom = read_line_as_signature_part(&last);
-    Some([name, top, left, right, bottom])
-}
-
-fn read_line_as_signature_part(line: &str) -> u16 {
-    let mut part = 0;
-    let mut digit = 1_u16;
-    for c in line.chars(){
-        if c == '#' {
-            part += digit;
+    let mut rows = [0; 10];
+    let mut left = 0;
+    let mut right = 0;
+    let mut outer_digit = 1_u16;
+    for (i, block) in block_iter.enumerate() {
+        left += if block.chars().next()? == '#' { outer_digit } else { 0 };
+        right += if block.chars().last()? == '#' { outer_digit } else { 0 };
+        let mut digit = 1_u16;
+        for c in block.chars(){
+            if c == '#' {
+                rows[i] += digit;
+            }
+            digit <<= 1
         }
-        digit <<= 1
+        outer_digit <<= 1;
     }
-    part
+
+    Some(
+        Block {
+            id,
+            left,
+            right,
+            rows
+        }
+    )
 }
