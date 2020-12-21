@@ -4,23 +4,84 @@ use crate::file_util::read_lines;
 struct Block {
     id: u16,
     rows: [u16; 10],
-    left: u16,
-    right: u16,
-    matching_ids: [u16; 4]
+    border_clockwise: [u16; 4],
+    border_anti_clockwise: [u16; 4],
+    matching_ids: [Option<(u16, bool)>; 4]
+}
+
+#[derive(Eq, PartialEq)]
+enum Flip {
+    FlipX,
+    FlipY,
+    FlipXY,
+    Identity
 }
 
 impl Block {
-    fn borders(&self) -> [u16; 4] { [self.rows[0], self.left, self.right, self.rows[9]] }
-    fn add_matching_sides(&mut self, block: &mut Block) -> &mut Self {
-        if self.id == block.id {
-            return self;
+    fn new(id: u16, rows: [u16; 10]) -> Self {
+        let mut left = 0;
+        let mut right = 0;
+        let mut multiplier = 1_u16;
+        // clock-wise bit arrangement
+        for i in 0..10 {
+            left += if rows[10 - i - 1] & 1 == 1 { multiplier } else { 0 };
+            right += if rows[i] & 512 == 512 { multiplier } else { 0 };
+            multiplier <<= 1;
         }
-        for (id, side) in self.borders().iter().enumerate() {
-            let flipped_side = side.flip_side();
-            for (other_id, other_side) in block.borders().iter().enumerate() {
-                if side == other_side || flipped_side == *other_side {
-                    self.matching_ids[id] = block.id;
-                    block.matching_ids[other_id] = self.id;
+        Block {
+            id,
+            rows,
+            border_clockwise: [rows[0], right, rows[9].reverse_bits() >> 6, left],
+            border_anti_clockwise: [
+                rows[0].reverse_bits() >> 6,
+                right.reverse_bits() >> 6,
+                rows[9],
+                left.reverse_bits() >> 6
+            ],
+            matching_ids: [None; 4]
+        }
+    }
+    fn transformed(&self, flip: Flip) -> [u16; 10] {
+        let mut result = [0; 10];
+        match flip {
+            Flip::Identity => self.rows.iter()
+                .enumerate()
+                .for_each(|(i, r)| result[i] = *r),
+            Flip::FlipX => {
+                self.rows.iter()
+                    .enumerate()
+                    .for_each(|(i, r)| result[i] = r.reverse_bits() >> 6)
+            },
+            Flip::FlipY => {
+                let mut i = 1_u16;
+                for _ in 0..10 {
+                    for y in 0..10 {
+                        result[y] += self.rows[10 - y - 1] & i
+                    }
+                    i <<= 1;
+                }
+            },
+            Flip::FlipXY => {
+                for y in 0..10 {
+                    let mut i = 1_u16;
+                    let reversed = self.rows[10 - y - 1].reverse_bits() >> 6;
+                    for _ in 0..10 {
+                        result[y] += reversed  & i;
+                        i <<= 1;
+                    }
+                }
+            }
+        }
+        result
+    }
+    fn add_matching_sides(&mut self, block: &mut Block) -> &mut Self {
+        let iter = self.border_clockwise.iter()
+            .zip(self.border_anti_clockwise.iter()).enumerate();
+        for (id, (side, flipped_side)) in iter {
+            for (other_id, other_side) in block.border_clockwise.iter().enumerate() {
+                if side == other_side || flipped_side == other_side {
+                    self.matching_ids[id] = Some((block.id, flipped_side == other_side));
+                    block.matching_ids[other_id] = Some((self.id, flipped_side == other_side));
                     return self;
                 }
             }
@@ -28,7 +89,7 @@ impl Block {
         self
     }
     fn missing_sides(&self) -> usize {
-        self.matching_ids.iter().filter(|x| **x != 0).count()
+        self.matching_ids.iter().filter(|x| x.is_none()).count()
     }
 }
 
@@ -46,13 +107,21 @@ pub fn run_day_twenty() {
     let mut signatures = read_image_signatures(&mut iter);
     populate_matches(&mut signatures);
 
+    let corners: Vec<&Block> = signatures.iter()
+        .filter(|x| x.missing_sides() == 2)
+        .collect();
     println!(
         "Part 1 {:?}",
-        signatures.iter()
-            .filter(|x| x.missing_sides() == 2)
-            .map(|it| it.id as usize)
-            .product::<usize>()
+        corners.iter().map(|it| it.id as usize).product::<usize>()
     );
+
+}
+
+fn print(x: &[u16; 10], y: &[u16; 10]) {
+    for i in 0..10 {
+        println!("{:010b} {:010b}", x[i], y[i]);
+    }
+    println!();
 }
 
 fn populate_matches(signatures: &mut Vec<Block>) {
@@ -87,12 +156,7 @@ fn read_image_signature(iter: &mut impl Iterator<Item = String>) -> Option<Block
     let block_iter = iter
         .take_while(|it| !it.trim().is_empty());
     let mut rows = [0; 10];
-    let mut left = 0;
-    let mut right = 0;
-    let mut outer_digit = 1_u16;
     for (i, block) in block_iter.enumerate() {
-        left += if block.chars().next()? == '#' { outer_digit } else { 0 };
-        right += if block.chars().last()? == '#' { outer_digit } else { 0 };
         let mut digit = 1_u16;
         for c in block.chars(){
             if c == '#' {
@@ -100,16 +164,7 @@ fn read_image_signature(iter: &mut impl Iterator<Item = String>) -> Option<Block
             }
             digit <<= 1
         }
-        outer_digit <<= 1;
     }
 
-    Some(
-        Block {
-            id,
-            left,
-            right,
-            rows,
-            matching_ids: [0; 4]
-        }
-    )
+    Some(Block::new(id, rows))
 }
