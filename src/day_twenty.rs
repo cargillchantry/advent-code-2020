@@ -11,10 +11,12 @@ struct Block {
 
 #[derive(Eq, PartialEq)]
 enum Flip {
-    FlipX,
-    FlipY,
-    FlipXY,
-    Identity
+    FlipX, FlipY, FlipXY, Identity
+}
+
+#[derive(Eq, PartialEq)]
+enum Rotate {
+    RotateLeft, RotateRight, Identity
 }
 
 impl Block {
@@ -41,7 +43,7 @@ impl Block {
             matching_ids: [None; 4]
         }
     }
-    fn transformed(&self, flip: Flip) -> [u16; 10] {
+    fn transformed_rows(&self, flip: Flip, rotate: Rotate) -> [u16; 10] {
         let mut result = [0; 10];
         match flip {
             Flip::Identity => self.rows.iter()
@@ -66,13 +68,43 @@ impl Block {
                     let mut i = 1_u16;
                     let reversed = self.rows[10 - y - 1].reverse_bits() >> 6;
                     for _ in 0..10 {
-                        result[y] += reversed  & i;
+                        result[y] += reversed & i;
                         i <<= 1;
                     }
                 }
             }
         }
-        result
+        match rotate {
+            Rotate::RotateLeft => {
+                let mut digit = 1u16;
+                let mut replacement = [0_u16; 10];
+                for y in 0..10 {
+                    let mut other_digit = 1;
+                    for x in 0..10 {
+                        replacement[y] += if result[x] & digit == digit { other_digit } else { 0 };
+                        other_digit <<= 1;
+                    }
+                    digit <<= 1;
+                }
+                for i in 0..10 { replacement[i] = replacement[i].reverse_bits() >> 6 }
+                replacement
+            },
+            Rotate::RotateRight => {
+                let mut digit = 1u16;
+                let mut replacement = [0_u16; 10];
+                for y in 0..10 {
+                    let mut other_digit = 512u16;
+                    for x in 0..10 {
+                        replacement[y] += if result[10 - x - 1] & digit == digit { other_digit } else { 0 };
+                        other_digit >>= 1;
+                    }
+                    digit <<= 1;
+                }
+                for i in 0..10 { replacement[i] = replacement[i].reverse_bits() >> 6 }
+                replacement
+            },
+            Rotate::Identity => result
+        }
     }
     fn add_matching_sides(&mut self, block: &mut Block) -> &mut Self {
         let iter = self.border_clockwise.iter()
@@ -114,12 +146,23 @@ pub fn run_day_twenty() {
         "Part 1 {:?}",
         corners.iter().map(|it| it.id as usize).product::<usize>()
     );
+    let start_corner = corners[0];
+    let matching_ids = &start_corner.matching_ids;
+    let transform = if matching_ids[0].is_none() && matching_ids[1].is_none() {
+        Flip::FlipY
+    } else if matching_ids[1].is_none() && matching_ids[2].is_none() {
+        Flip::FlipY
+    } else if matching_ids[2].is_none() && matching_ids[3].is_none() {
+        Flip::FlipY
+    } else {
+        Flip::Identity
+    };
 
 }
 
 fn print(x: &[u16; 10], y: &[u16; 10]) {
     for i in 0..10 {
-        println!("{:010b} {:010b}", x[i], y[i]);
+        println!("{:010b} {:010b}", x[i].reverse_bits() >> 6, y[i].reverse_bits() >> 6);
     }
     println!();
 }
