@@ -9,14 +9,14 @@ struct Block {
     matching_ids: [Option<(u16, bool)>; 4]
 }
 
-#[derive(Eq, PartialEq)]
+#[derive(Eq, PartialEq, Clone)]
 enum Flip {
     FlipX, FlipY, FlipXY, Identity
 }
 
-#[derive(Eq, PartialEq)]
+#[derive(Eq, PartialEq, Clone)]
 enum Rotate {
-    RotateLeft, RotateRight, Identity
+    RotateLeft, RotateRight, RotateRightRight, Identity
 }
 
 impl Block {
@@ -64,14 +64,7 @@ impl Block {
                 }
             },
             Flip::FlipXY => {
-                for y in 0..10 {
-                    let mut i = 1_u16;
-                    let reversed = self.rows[10 - y - 1].reverse_bits() >> 6;
-                    for _ in 0..10 {
-                        result[y] += reversed & i;
-                        i <<= 1;
-                    }
-                }
+                result = Self::transform_xy(&self.rows)
             }
         }
         match rotate {
@@ -103,9 +96,27 @@ impl Block {
                 for i in 0..10 { replacement[i] = replacement[i].reverse_bits() >> 6 }
                 replacement
             },
+            Rotate::RotateRightRight => {
+                Self::transform_xy(&result)
+            }
             Rotate::Identity => result
         }
     }
+
+    fn transform_xy(to_transform: &[u16; 10]) -> [u16; 10] {
+        let mut result = [0u16; 10];
+        for y in 0..10 {
+            let mut i = 1_u16;
+            let reversed = to_transform[10 - y - 1].reverse_bits() >> 6;
+            for _ in 0..10 {
+                result[y] += reversed & i;
+                i <<= 1;
+            }
+        }
+        result
+    }
+
+
     fn add_matching_sides(&mut self, block: &mut Block) -> &mut Self {
         let iter = self.border_clockwise.iter()
             .zip(self.border_anti_clockwise.iter()).enumerate();
@@ -148,23 +159,41 @@ pub fn run_day_twenty() {
     );
     let start_corner = corners[0];
     let matching_ids = &start_corner.matching_ids;
-    let transform = if matching_ids[0].is_none() && matching_ids[1].is_none() {
-        Flip::FlipY
-    } else if matching_ids[1].is_none() && matching_ids[2].is_none() {
-        Flip::FlipY
-    } else if matching_ids[2].is_none() && matching_ids[3].is_none() {
-        Flip::FlipY
-    } else {
-        Flip::Identity
-    };
+    let (transform, index_adjustment) =
+        if matching_ids[0].is_none() && matching_ids[1].is_none() {
+            (Rotate::RotateRight, 1_usize)
+        } else if matching_ids[1].is_none() && matching_ids[2].is_none() {
+            (Rotate::Identity, 0)
+        } else if matching_ids[2].is_none() && matching_ids[3].is_none() {
+            (Rotate::RotateLeft, 3)
+        } else {
+            (Rotate::RotateRightRight, 2)
+        };
+    let mut board = vec!(vec!(None; 10); 1);
+    board[0][0] = Some((start_corner, transform, Flip::Identity));
 
+    print(&board);
+
+    // I give up ...
 }
 
-fn print(x: &[u16; 10], y: &[u16; 10]) {
-    for i in 0..10 {
-        println!("{:010b} {:010b}", x[i].reverse_bits() >> 6, y[i].reverse_bits() >> 6);
+fn print(board: &[Vec<Option<(&Block, Rotate, Flip)>>]) {
+    for row in board.iter() {
+        let cols = row.iter().filter_map(|x| {
+            if let Some((board, rot, flip)) = x {
+                Some(board.transformed_rows(flip.clone(), rot.clone()))
+            } else {
+                None
+            }
+        }).collect::<Vec<[u16; 10]>>();
+        for i in 0..10 {
+            for col in cols.iter() {
+                print!("{:010b} ", col[i].reverse_bits() >> 6);
+            }
+            println!();
+        }
+        println!();
     }
-    println!();
 }
 
 fn populate_matches(signatures: &mut Vec<Block>) {
